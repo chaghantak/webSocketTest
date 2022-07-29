@@ -9,19 +9,34 @@
   </head>
   <body>
     <header>
-      <h1>WebSocket Test </h1>
+      <h1>SocketIO</h1>
     </header>
     <main>
-      <form id="nickname">
-        <input type="text" placeholder="미현아 여기다 닉네임">
-        <button>Save</button>
-      </form>
-      <ul></ul>
-      <form id="message">
-        <input type="text" placeholder="text" required>
-        <button>Send</button>
-      </form>
+      <div id="enter">
+        <h4>List</h4>
+        <ul> </ul>
+        <form>
+          <input placeholder="room name" required type="text">
+          <button>Enter Room</button>
+        </form>
+        <button id="see">See Room</button>
+      </div>
+      <div id="nick">
+        <form>
+          <input placeholder="nickname" required type="text">
+          <button>Save</button>
+        </form>
+      </div>
+      <div id="msg">
+        <h3></h3>
+        <ul></ul>
+        <form>
+          <input placeholder="msg" required type="text">
+          <button>Send</button>
+        </form>
+      </div>
     </main>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="/public/js/index.js"></script>
   </body>
 </html>

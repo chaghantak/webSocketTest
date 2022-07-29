@@ -1,40 +1,105 @@
-// front
-const messageUl = document.querySelector("ul");
-const nickForm = document.querySelector("#nickname");
-const messageForm = document.querySelector("#message");
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io();
 
-function makeMessage(type, payload) {
-  const msg = { type, payload };
-  return JSON.stringify(msg);
+const enterRoom = document.querySelector("#enter"); // enter div
+const enterForm = enterRoom.querySelector("form"); // enter form
+const seeRoom = enterRoom.querySelector("#see"); // enter button
+
+const nick = document.querySelector("#nick"); // enter nick
+const nickForm = nick.querySelector("form"); // enter form
+
+const msgRoom = document.querySelector("#msg"); // enter msgroom
+const msgForm = msgRoom.querySelector("form"); // enter form
+let roomName; // blank
+
+nickForm.hidden = true;
+msgForm.hidden = true;
+
+function addMessage(message) {
+  const ul = msgRoom.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
 }
 
-// receive to server
-socket.addEventListener("open", () => {
-  console.log("Connect to Server✅");
-});
+function handleMsg() {
+  nickForm.hidden = true;
+  msgForm.hidden = false;
+  const h3 = msgRoom.querySelector("h3");
+  h3.innerText = `Room ${roomName}`;
+  msgForm.addEventListener("submit", (event) => {
+    event.preventDefault();
 
-socket.addEventListener("close", () => {
-  console.log("DisConnect to Server❌");
-});
+    const input = msgForm.querySelector("input");
+    const value = input.value;
+    socket.emit("message", { payload: input.value }, roomName, () => {
+      addMessage(`You: ${value}`);
+    });
+    input.value = "";
+  });
+}
 
-socket.addEventListener("message", (message) => {
-  console.log(`New Message: ${message.data} from Server`);
-  const li = document.createElement("li");
-  li.innerText = message.data;
-  messageUl.append(li);
-});
+function handleNick() {
+  seeRoom.hidden = true;
+  enterForm.hidden = true;
+  nickForm.hidden = false;
+  console.log("server done");
+  nickForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const input = nickForm.querySelector("input");
+    socket.emit("nickname", { payload: input.value }, roomName, handleMsg);
+  });
+}
 
-nickForm.addEventListener("submit", (event) => {
+function enterSubmit(event) {
   event.preventDefault();
-  const input = nickForm.querySelector("input");
-  socket.send(makeMessage("nickname", input.value));
+  const input = enterForm.querySelector("input"); // enter input
+  socket.emit("enter_room", { payload: input.value }, handleNick);
+  roomName = input.value;
   input.value = "";
+}
+
+enterForm.addEventListener("submit", enterSubmit);
+socket.on("welcome", (msg, userCount) => {
+  addMessage(msg);
+  const h3 = msgRoom.querySelector("h3");
+  h3.innerText = `Room ${roomName}(${userCount})`;
 });
 
-messageForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const input = messageForm.querySelector("input");
-  socket.send(makeMessage("new_message", input.value));
-  input.value = "";
+socket.on("exit", (msg, userCount) => {
+  addMessage(msg);
+  const h3 = msgRoom.querySelector("h3");
+  h3.innerText = `Room ${roomName}(${userCount})`;
+});
+
+socket.on("message", (msg) => {
+  addMessage(msg);
+});
+
+socket.on("room_change", (rooms) => {
+  const roomList = enterRoom.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li); // last child append
+  });
+});
+
+seeRoom.addEventListener("click", () => {
+  socket.emit("click");
+});
+socket.on("click", (rooms) => {
+  const roomList = enterRoom.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li); // last child append
+  });
 });
